@@ -1,16 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Models;
 
 namespace Projekat
 {
@@ -26,6 +21,28 @@ namespace Projekat
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<FudbalskiKlubContext>(options =>
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("ProjekatCS"));
+            });
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CORS", builder =>
+                {
+                    builder.WithOrigins(new string[]
+                    {
+                        "http://localhost8080",
+                        "https://localhost8080",
+                        "http://127.0.0.1:8080",
+                        "https://127.0.0.1:8080",
+                        //"http://localhost:5001",
+                        //"http://127.0.0.1:5500"
+                    })
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                });
+            });
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -47,6 +64,8 @@ namespace Projekat
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors("CORS");
 
             app.UseAuthorization();
 
