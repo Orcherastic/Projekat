@@ -69,7 +69,6 @@ namespace Projekat.Controllers
         [HttpPost]
         public async Task<ActionResult> DodajIgraca([FromBody] Igrac igrac)
         {
-            // Provera unetih podataka novog igraca
             if(string.IsNullOrWhiteSpace(igrac.Ime) || igrac.Ime.Length > 30 || 
                 igrac.Ime.Any(c => char.IsDigit(c)))
             {
@@ -123,6 +122,206 @@ namespace Projekat.Controllers
                 Context.Igraci.Add(NoviIgrac);
                 await Context.SaveChangesAsync();
                 return Ok($"Uspesno dodat novi igrac {NoviIgrac.BrojDresa} {NoviIgrac.Ime} {NoviIgrac.Prezime}");
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Route("DodajIgraca/{Ime}/{Prezime}/{BrojDresa}/{BrojGodina}/{Kvalitet}/{NazivPozicije}/{Drzavljanstvo}/{NazivTima}")]
+        [HttpPost]
+        public async Task<ActionResult> DodajIgraca(string Ime, string Prezime, int BrojDresa, int BrojGodina, int Kvalitet, string NazivPozicije, string Drzavljanstvo, string NazivTima)
+        {
+            if(string.IsNullOrWhiteSpace(Ime) || Ime.Length > 30 || 
+                Ime.Any(c => char.IsDigit(c)))
+            {
+                return BadRequest("Ne validno ime igraca!");
+            }
+            if(string.IsNullOrWhiteSpace(Prezime) || Prezime.Length > 30 || 
+                Prezime.Any(c => char.IsDigit(c)))
+            {
+                return BadRequest("Ne validno prezime igraca!");
+            }
+            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
+                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() != null)
+            {
+                return BadRequest("Ne validan broj dresa igraca ili je uneti broj vec dodeljen!");
+            }
+            if(BrojGodina < 16 || BrojGodina > 42)
+            {
+                return BadRequest("Ne validan broj godina igraca!");
+            }
+            if(Kvalitet < 1 || Kvalitet > 5)
+            {
+                return BadRequest("Ne validan kvalitet igraca!");
+            }
+            if(Context.Pozicije.Where(poz => poz.Naziv == NazivPozicije)
+                .FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validna pozicija igraca!");
+            }
+            if(Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Drzavljanstvo)
+                .FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validna nacionalnost igraca!");
+            }
+            if(Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validan naziv kluba!");
+            }
+
+            try
+            {
+                Igrac NoviIgrac = new Igrac
+                {
+                    Ime = Ime,
+                    Prezime = Prezime, 
+                    BrojDresa = BrojDresa,
+                    BrojGodina = BrojGodina,
+                    Kvalitet = Kvalitet,
+                    Pozicija = Context.Pozicije.Where(poz => poz.Naziv == NazivPozicije).FirstOrDefault(),
+                    Nacionalnost = Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Drzavljanstvo).FirstOrDefault(),
+                    Tim = Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault()
+                };
+
+                Context.Igraci.Add(NoviIgrac);
+                await Context.SaveChangesAsync();
+                return Ok($"Uspesno dodat novi igrac {NoviIgrac.BrojDresa} {NoviIgrac.Ime} {NoviIgrac.Prezime} u tim {NazivTima}");
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Route("PromeniIgraca/{BrojDresa}/{NazivTima}")]
+        [HttpPut]
+        public async Task<ActionResult> PromeniIgraca(int BrojDresa, string NazivTima)
+        {
+            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
+                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
+            {
+                return BadRequest("Ne validan broj dresa igraca!");
+            }
+            if(Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validan naziv kluba!");
+            }
+
+            try
+            {
+                var PostojeciIgrac = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
+
+                Igrac NoviIgrac = new Igrac
+                {
+                    ID = PostojeciIgrac.ID,
+                    Ime = PostojeciIgrac.Ime,
+                    Prezime = PostojeciIgrac.Prezime,
+                    BrojDresa = PostojeciIgrac.BrojDresa,
+                    BrojGodina = PostojeciIgrac.BrojGodina,
+                    Kvalitet = PostojeciIgrac.Kvalitet,
+                    Pozicija = PostojeciIgrac.Pozicija,
+                    Nacionalnost = PostojeciIgrac.Nacionalnost,
+                    Tim = Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault()
+                };
+
+                Context.Igraci.Remove(PostojeciIgrac);
+                Context.Igraci.Add(NoviIgrac);
+                await Context.SaveChangesAsync();
+                return Ok($"Uspesno dodat igrac {PostojeciIgrac.Ime} {PostojeciIgrac.Prezime} u {NazivTima}");
+            }  
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Route("PromeniIgraca/{BrojDresa}/{PozicijaID}")]
+        [HttpPut]
+        public async Task<ActionResult> PromeniIgraca(int BrojDresa, int PozicijaID)
+        {
+            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
+                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
+            {
+                return BadRequest("Ne validan broj dresa igraca!");
+            }
+            if(Context.Pozicije.Where(poz => poz.ID == PozicijaID).FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validna pozicija!");
+            }
+
+            try
+            {
+                var PostojeciIgrac = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
+
+                Igrac NoviIgrac = new Igrac
+                {
+                    ID = PostojeciIgrac.ID,
+                    Ime = PostojeciIgrac.Ime,
+                    Prezime = PostojeciIgrac.Prezime,
+                    BrojDresa = PostojeciIgrac.BrojDresa,
+                    BrojGodina = PostojeciIgrac.BrojGodina,
+                    Kvalitet = PostojeciIgrac.Kvalitet,
+                    Pozicija = Context.Pozicije.Where(poz => poz.ID == PozicijaID).FirstOrDefault(),
+                    Nacionalnost = PostojeciIgrac.Nacionalnost
+                };
+
+                Context.Igraci.Remove(PostojeciIgrac);
+                Context.Igraci.Add(NoviIgrac);
+                await Context.SaveChangesAsync();
+                return Ok($"Uspesno promenjena pozicija igraca {PostojeciIgrac.Ime} {PostojeciIgrac.Prezime} u {NoviIgrac.Pozicija.Naziv}");
+            }  
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Route("ObrisiIgraca/{BrojDresa}")]
+        [HttpDelete]
+        public async Task<ActionResult> ObrisiIgraca(int BrojDresa)
+        {
+            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
+                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
+            {
+                return BadRequest("Ne validan broj dresa igraca!");
+            }
+
+            try
+            {
+                var IgracZaBrisanje = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
+                Context.Igraci.Remove(IgracZaBrisanje);
+                await Context.SaveChangesAsync();
+                return Ok($"Uspesno obrisan igrac sa brojem dresa {BrojDresa}");
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Route("ObrisiIgraca/{BrojDresa}/{NazivTima}")]
+        [HttpDelete]
+        public async Task<ActionResult> ObrisiIgraca(int BrojDresa, string NazivTima)
+        {
+            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
+                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
+            {
+                return BadRequest("Ne validan broj dresa igraca!");
+            }
+            if(Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault() == null || 
+                Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault().Tim.Naziv != NazivTima)
+            {
+                return BadRequest("Nije validan naziv kluba!");
+            }
+
+            try
+            {
+                var IgracZaBrisanje = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
+                Context.Igraci.Remove(IgracZaBrisanje);
+                await Context.SaveChangesAsync();
+                return Ok($"Uspesno obrisan igrac sa brojem dresa {BrojDresa} iz kluba {NazivTima}");
             }
             catch(Exception e)
             {
