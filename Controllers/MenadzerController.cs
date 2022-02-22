@@ -60,7 +60,49 @@ namespace Projekat.Controllers
             {
                 return BadRequest(e.Message);
             }
+        }
 
+        [Route("PromeniMenadzera/{ID}/{Ime}/{Prezime}/{BrojGodina}")]
+        [HttpPut]
+        public async Task<ActionResult> PromeniPoziciju(int ID, string Ime, string Prezime, int BrojGodina)
+        {
+            if(Context.Menadzeri.Where(m => m.ID == ID).FirstOrDefault() == null)
+            {
+                return BadRequest("Nepostojeci menadzer!");
+            }
+            if(string.IsNullOrWhiteSpace(Ime) || Ime.Length > 30)
+            {
+                return BadRequest("Nije validno ime menadzera!");
+            }
+            if(string.IsNullOrWhiteSpace(Prezime) || Prezime.Length > 30)
+            {
+                return BadRequest("Nije validno prezime menadzera!");
+            }
+            if(BrojGodina < 35 || BrojGodina > 65)
+            {
+                return BadRequest("Nije validan broj godina menadzera!");
+            }
+
+            try
+            {
+                var PostojeciMenadzer = Context.Menadzeri.Where(m => m.ID == ID).FirstOrDefault();
+                Menadzer NoviMenadzer = new Menadzer
+                {
+                    ID = PostojeciMenadzer.ID,
+                    Ime = Ime,
+                    Prezime = Prezime,
+                    BrojGodina = BrojGodina
+                };
+
+                Context.Menadzeri.Remove(PostojeciMenadzer);
+                Context.Menadzeri.Add(NoviMenadzer);
+                await Context.SaveChangesAsync();
+                return Ok($"Uspesno promenjen menadzer u {Ime}, {Prezime}, {BrojGodina}");
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
         [Route("ObrisiMenadzera/{ID}")]
