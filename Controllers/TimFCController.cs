@@ -163,13 +163,13 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("DodajIgracaUTim/{NazivTima}/{BrojDresa}/{PozicijaID}")]
+        [Route("DodajIgracaUTim/{TimID}/{BrojDresa}/{PozicijaID}")]
         [HttpPut]
-        public async Task<ActionResult> DodajIgracaUTim(string NazivTima, int BrojDresa, int PozicijaID)
+        public async Task<ActionResult> DodajIgracaUTim(int TimID, int BrojDresa, int PozicijaID)
         {
-            if(Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault() == null)
+            if(Context.Timovi.Where(t => t.ID == TimID).FirstOrDefault() == null)
             {
-                return BadRequest("Nije validan naziv tima!");
+                return BadRequest("Nije validan ID tima!");
             }
             if(Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
             {
@@ -193,7 +193,7 @@ namespace Projekat.Controllers
                 .Where(i => i.Tim == null);
 
                 var PostojeciIgrac = PovVrd.FirstOrDefault();
-                var PostojeciTim = Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault();
+                var PostojeciTim = Context.Timovi.Where(t => t.ID == TimID).FirstOrDefault();
                 Igrac NoviIgrac = new Igrac
                 {
                     ID = PostojeciIgrac.ID,
@@ -210,7 +210,7 @@ namespace Projekat.Controllers
                 Context.Igraci.Remove(PostojeciIgrac);
                 Context.Igraci.Add(NoviIgrac);
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno doveden {NoviIgrac.Ime}, {NoviIgrac.Prezime} u tim {NazivTima}");
+                return Ok($"Uspesno doveden {NoviIgrac.Ime}, {NoviIgrac.Prezime} u tim {PostojeciTim.Naziv}");
             }
             catch(Exception e)
             {
