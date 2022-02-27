@@ -30,11 +30,10 @@ namespace Projekat.Controllers
 
             var PovVrd = Context.Igraci.Include(i => i.Pozicija)
                                        .Where(i => i.Pozicija.Naziv == Pozicija);
-                                       //.Where(i => i.Tim == null);
             
             try
             {
-                return Ok(await PovVrd.Select(i => new {i.Ime, i.Prezime, i.BrojDresa, i.BrojGodina, i.Kvalitet, i.Pozicija, i.Nacionalnost}).ToListAsync());
+                return Ok(await PovVrd.Select(i => new {i.ID, i.Ime, i.Prezime, i.BrojDresa, i.BrojGodina, i.Kvalitet, i.Pozicija, i.Nacionalnost, i.Tim.Naziv}).ToListAsync());
             }
             catch(Exception e)
             {
@@ -42,9 +41,9 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("Preuzmi/{Nacionalnost}")]
+        [Route("PreuzmiIgraca/{Nacionalnost}")]
         [HttpGet]
-        public async Task<ActionResult> PreuzmiIgraca(string Nacionalnost)
+        public async Task<ActionResult> PreuzmiIgraca(string Nacionalnost) 
         {
             if(Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Nacionalnost).FirstOrDefault() == null)
             {
@@ -53,11 +52,9 @@ namespace Projekat.Controllers
 
             var PovVrd = Context.Igraci.Include(i => i.Nacionalnost)
                                        .Where(i => i.Nacionalnost.Drzavljanstvo == Nacionalnost);
-                                       //.Where(i => i.Tim == null);
-            
             try
             {
-                return Ok(await PovVrd.Select(i => new {i.Ime, i.Prezime, i.BrojDresa, i.BrojGodina, i.Kvalitet, i.Pozicija, i.Nacionalnost}).ToListAsync());
+                return Ok(await PovVrd.Select(i => new {i.ID, i.Ime, i.Prezime, i.BrojDresa, i.BrojGodina, i.Kvalitet, i.Pozicija, i.Nacionalnost, i.Tim.Naziv}).ToListAsync());
             }
             catch(Exception e)
             {
@@ -195,14 +192,21 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("PromeniIgraca/{BrojDresa}/{NazivTima}")]
+        [Route("PromeniIgraca/{ID}/{PozicijaID}/{Nacionalnost}/{NazivTima}")]
         [HttpPut]
-        public async Task<ActionResult> PromeniIgraca(int BrojDresa, string NazivTima)
+        public async Task<ActionResult> PromeniIgraca(int ID, int PozicijaID, string Nacionalnost, string NazivTima)
         {
-            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
-                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
+            if(Context.Igraci.Where(i => i.ID == ID).FirstOrDefault() == null)
             {
-                return BadRequest("Ne validan broj dresa igraca!");
+                return BadRequest("Ne validan ID igraca!");
+            }
+            if(Context.Pozicije.Where(poz => poz.ID == PozicijaID).FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validna pozicija!");
+            }
+            if(Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Nacionalnost).FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validna nacionalnost!");
             }
             if(Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault() == null)
             {
@@ -211,7 +215,7 @@ namespace Projekat.Controllers
 
             try
             {
-                var PostojeciIgrac = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
+                var PostojeciIgrac = Context.Igraci.Where(i => i.ID == ID).FirstOrDefault();
 
                 Igrac NoviIgrac = new Igrac
                 {
@@ -221,8 +225,8 @@ namespace Projekat.Controllers
                     BrojDresa = PostojeciIgrac.BrojDresa,
                     BrojGodina = PostojeciIgrac.BrojGodina,
                     Kvalitet = PostojeciIgrac.Kvalitet,
-                    Pozicija = PostojeciIgrac.Pozicija,
-                    Nacionalnost = PostojeciIgrac.Nacionalnost,
+                    Pozicija = Context.Pozicije.Where(poz => poz.ID == PozicijaID).FirstOrDefault(),
+                    Nacionalnost = Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Nacionalnost).FirstOrDefault(),
                     Tim = Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault()
                 };
 
@@ -237,23 +241,26 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("PromeniIgraca/{BrojDresa}/{PozicijaID}")]
+        [Route("PromeniIgraca/{ID}/{PozicijaID}/{Nacionalnost}")]
         [HttpPut]
-        public async Task<ActionResult> PromeniIgraca(int BrojDresa, int PozicijaID)
+        public async Task<ActionResult> PromeniIgraca(int ID, int PozicijaID, string Nacionalnost)
         {
-            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
-                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
+            if(Context.Igraci.Where(i => i.ID == ID).FirstOrDefault() == null)
             {
-                return BadRequest("Ne validan broj dresa igraca!");
+                return BadRequest("Ne validan ID igraca!");
             }
             if(Context.Pozicije.Where(poz => poz.ID == PozicijaID).FirstOrDefault() == null)
             {
                 return BadRequest("Nije validna pozicija!");
             }
+            if(Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Nacionalnost).FirstOrDefault() == null)
+            {
+                return BadRequest("Nije validna nacionalnost!");
+            }
 
             try
             {
-                var PostojeciIgrac = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
+                var PostojeciIgrac = Context.Igraci.Where(i => i.ID == ID).FirstOrDefault();
 
                 Igrac NoviIgrac = new Igrac
                 {
@@ -264,13 +271,13 @@ namespace Projekat.Controllers
                     BrojGodina = PostojeciIgrac.BrojGodina,
                     Kvalitet = PostojeciIgrac.Kvalitet,
                     Pozicija = Context.Pozicije.Where(poz => poz.ID == PozicijaID).FirstOrDefault(),
-                    Nacionalnost = PostojeciIgrac.Nacionalnost
+                    Nacionalnost = Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Nacionalnost).FirstOrDefault()
                 };
 
                 Context.Igraci.Remove(PostojeciIgrac);
                 Context.Igraci.Add(NoviIgrac);
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno promenjena pozicija igraca {PostojeciIgrac.Ime} {PostojeciIgrac.Prezime} u {NoviIgrac.Pozicija.Naziv}");
+                return Ok($"Uspesno promenjena pozicija igraca {PostojeciIgrac.Ime} {PostojeciIgrac.Prezime} u {NoviIgrac.Pozicija.Naziv} i nacionalnost u {Nacionalnost}");
             }  
             catch(Exception e)
             {
@@ -278,50 +285,21 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("ObrisiIgraca/{BrojDresa}")]
+        [Route("ObrisiIgraca/{ID}")]
         [HttpDelete]
-        public async Task<ActionResult> ObrisiIgraca(int BrojDresa)
+        public async Task<ActionResult> ObrisiIgraca(int ID)
         {
-            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
-                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
+            if(Context.Igraci.Where(i => i.ID == ID).FirstOrDefault() == null)
             {
-                return BadRequest("Ne validan broj dresa igraca!");
+                return BadRequest("Ne validan ID igraca!");
             }
 
             try
             {
-                var IgracZaBrisanje = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
+                var IgracZaBrisanje = Context.Igraci.Where(i => i.ID == ID).FirstOrDefault();
                 Context.Igraci.Remove(IgracZaBrisanje);
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno obrisan igrac sa brojem dresa {BrojDresa}");
-            }
-            catch(Exception e)
-            {
-                return BadRequest(e.Message);
-            }
-        }
-
-        [Route("ObrisiIgraca/{BrojDresa}/{NazivTima}")]
-        [HttpDelete]
-        public async Task<ActionResult> ObrisiIgraca(int BrojDresa, string NazivTima)
-        {
-            if(BrojDresa < 1 || BrojDresa > 99 || Context.Igraci
-                .Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
-            {
-                return BadRequest("Ne validan broj dresa igraca!");
-            }
-            if(Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault() == null || 
-                Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault().Tim.Naziv != NazivTima)
-            {
-                return BadRequest("Nije validan naziv kluba!");
-            }
-
-            try
-            {
-                var IgracZaBrisanje = Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault();
-                Context.Igraci.Remove(IgracZaBrisanje);
-                await Context.SaveChangesAsync();
-                return Ok($"Uspesno obrisan igrac sa brojem dresa {BrojDresa} iz kluba {NazivTima}");
+                return Ok($"Uspesno obrisan igrac {IgracZaBrisanje.Ime}, {IgracZaBrisanje.Prezime}");
             }
             catch(Exception e)
             {

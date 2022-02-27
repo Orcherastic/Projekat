@@ -28,13 +28,12 @@ namespace Projekat.Controllers
             }
 
             var PovVrd = Context.Timovi
-            .Include(t => t.Kvalitet)
             .Include(t => t.Igraci)
             .Where(t => t.Naziv == Naziv);
 
             try
             {
-                return Ok(await PovVrd.Select(t => new {t.Naziv, t.Kvalitet, t.Igraci}).ToListAsync());
+                return Ok(await PovVrd.Select(t => new {t.ID, t.Naziv, t.Kvalitet}).ToListAsync());
             }
             catch(Exception e)
             {
@@ -146,6 +145,7 @@ namespace Projekat.Controllers
                     ID = MenadzerID,
                     Ime = Context.Menadzeri.Where(p=>p.ID == MenadzerID).FirstOrDefault().Ime,
                     Prezime = Context.Menadzeri.Where(p=>p.ID == MenadzerID).FirstOrDefault().Prezime,
+                    BrojGodina = Context.Menadzeri.Where(p=>p.ID == MenadzerID).FirstOrDefault().BrojGodina,
                     Tim = NoviTim
                 };
 
@@ -218,22 +218,22 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("ObrisiTim/{Naziv}")]
+        [Route("ObrisiTim/{ID}")]
         [HttpDelete]
-        public async Task<ActionResult> ObrisiTim(string naziv)
+        public async Task<ActionResult> ObrisiTim(int ID)
         {
-            if(Context.Timovi.Where(t => t.Naziv == naziv).FirstOrDefault() == null)
+            if(Context.Timovi.Where(t => t.ID == ID).FirstOrDefault() == null)
             {
-                return BadRequest("Nije validan naziv tima!");
+                return BadRequest("Ne postojeci tim!");
             }
 
             try
             {
-                if(Context.Menadzeri.Where(m => m.Tim.Naziv == naziv).FirstOrDefault() != null)           
-                    Context.Menadzeri.Where(m => m.Tim.Naziv == naziv).FirstOrDefault().Tim = null;
-                if(Context.Igraci.Where(p => p.Tim.Naziv == naziv).ToList() != null)
+                if(Context.Menadzeri.Where(m => m.Tim.ID == ID).FirstOrDefault() != null)           
+                    Context.Menadzeri.Where(m => m.Tim.ID == ID).FirstOrDefault().Tim = null;
+                if(Context.Igraci.Where(p => p.Tim.ID == ID).ToList() != null)
                 {
-                    var Igraci = Context.Igraci.Where(p => p.Tim.Naziv == naziv).ToList();
+                    var Igraci = Context.Igraci.Where(p => p.Tim.ID == ID).ToList();
 
                     foreach(var i in Igraci)
                     {
@@ -241,9 +241,9 @@ namespace Projekat.Controllers
                     }
                 }
 
-                Context.Timovi.Remove(Context.Timovi.Where(p => p.Naziv == naziv).FirstOrDefault());
+                Context.Timovi.Remove(Context.Timovi.Where(p => p.ID == ID).FirstOrDefault());
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno obrisan tim {naziv}"); 
+                return Ok($"Uspesno obrisan tim {Context.Timovi.Where(p => p.ID == ID).FirstOrDefault().Naziv}"); 
             }
             catch(Exception e)
             {

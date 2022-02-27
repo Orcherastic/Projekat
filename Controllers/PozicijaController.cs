@@ -26,10 +26,10 @@ namespace Projekat.Controllers
 
         [Route("DodajPoziciju/{Naziv}")]
         [HttpPost]
-        public async Task<ActionResult> DodajPoziciju(string naziv)
+        public async Task<ActionResult> DodajPoziciju(string Naziv)
         {
-            if(string.IsNullOrWhiteSpace(naziv) || naziv.Length > 30 || Context.Pozicije
-                .Where(poz => poz.Naziv == naziv).FirstOrDefault() != null)
+            if(string.IsNullOrWhiteSpace(Naziv) || Naziv.Length > 30 || Context.Pozicije
+                .Where(poz => poz.Naziv == Naziv).FirstOrDefault() != null)
             {
                 return BadRequest("Nije validna pozicija ili uneta pozicija vec postoji u bazi!");
             }
@@ -38,12 +38,12 @@ namespace Projekat.Controllers
             {
                 Pozicija NovaPozicija = new Pozicija
                 {
-                    Naziv = naziv
+                    Naziv = Naziv
                 };
 
                 Context.Pozicije.Add(NovaPozicija);
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno dodata nova pozicija {NovaPozicija.Naziv}");
+                return Ok($"Uspesno dodata nova pozicija {Naziv}");
             }
             catch(Exception e)
             {
@@ -85,21 +85,21 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("ObrisiPoziciju/{Naziv}")]
+        [Route("ObrisiPoziciju/{ID}")]
         [HttpDelete]
-        public async Task<ActionResult> ObrisiPoziciju(string Naziv)
+        public async Task<ActionResult> ObrisiPoziciju(int ID)
         {
-            if(Context.Pozicije.Where(poz => poz.Naziv == Naziv).FirstOrDefault() == null)
+            if(Context.Pozicije.Where(poz => poz.ID == ID).FirstOrDefault() == null)
             {
                 return BadRequest("Nepostojeca pozicija!");
             }
 
             try
             {
-                var PozZaBris = Context.Pozicije.Where(poz => poz.Naziv == Naziv).FirstOrDefault();
+                var PozZaBris = Context.Pozicije.Where(poz => poz.ID == ID).FirstOrDefault();
                 Context.Pozicije.Remove(PozZaBris);
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno obrisana pozicija {Naziv}.");
+                return Ok($"Uspesno obrisana pozicija {PozZaBris.Naziv}.");
             }
             catch(Exception e)
             {

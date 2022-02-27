@@ -26,10 +26,10 @@ namespace Projekat.Controllers
 
         [Route("DodajNacionalnost/{Drzavljanstvo}")]
         [HttpPost]
-        public async Task<ActionResult> DodajNacionalnost(string drzavljanstvo)
+        public async Task<ActionResult> DodajNacionalnost(string Drzavljanstvo)
         {
-            if(string.IsNullOrWhiteSpace(drzavljanstvo) || drzavljanstvo.Length > 50 || Context.Nacionalnostsi
-                .Where(nac => nac.Drzavljanstvo == drzavljanstvo).FirstOrDefault() != null)
+            if(string.IsNullOrWhiteSpace(Drzavljanstvo) || Drzavljanstvo.Length > 50 || Context.Nacionalnostsi
+                .Where(nac => nac.Drzavljanstvo == Drzavljanstvo).FirstOrDefault() != null)
             {
                 return BadRequest("Nije validno drzavljanstvo ili uneto drzavljanstvo vec postoji u bazi!");
             }
@@ -38,12 +38,12 @@ namespace Projekat.Controllers
             {
                 Nacionalnost NovaNacionalnost = new Nacionalnost
                 {
-                    Drzavljanstvo = drzavljanstvo
+                    Drzavljanstvo = Drzavljanstvo
                 };
 
                 Context.Nacionalnostsi.Add(NovaNacionalnost);
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno dodato novo drzavljanstvo {NovaNacionalnost.Drzavljanstvo}");
+                return Ok($"Uspesno dodato novo drzavljanstvo {Drzavljanstvo}");
             }
             catch(Exception e)
             {
@@ -86,21 +86,21 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("DObrisiNacionalnost/{Drzavljanstvo}")]
+        [Route("ObrisiNacionalnost/{ID}")]
         [HttpDelete]
-        public async Task<ActionResult> DObrisiNacionalnost(string Drzavljanstvo)
+        public async Task<ActionResult> ObrisiNacionalnost(int ID)
         {
-            if(Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Drzavljanstvo).FirstOrDefault() == null)
+            if(Context.Nacionalnostsi.Where(nac => nac.ID == ID).FirstOrDefault() == null)
             {
                 return BadRequest("Nepostojeca nacionalnost!");
             }
 
             try
             {
-                var NacZaBris = Context.Nacionalnostsi.Where(nac => nac.Drzavljanstvo == Drzavljanstvo).FirstOrDefault();
+                var NacZaBris = Context.Nacionalnostsi.Where(nac => nac.ID == ID).FirstOrDefault();
                 Context.Nacionalnostsi.Remove(NacZaBris);
                 await Context.SaveChangesAsync();
-                return Ok($"Uspesno obrisana pozicija {Drzavljanstvo}.");
+                return Ok($"Uspesno obrisana nacionalnost {NacZaBris.Drzavljanstvo}.");
             }
             catch(Exception e)
             {
