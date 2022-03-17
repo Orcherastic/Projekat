@@ -163,13 +163,13 @@ namespace Projekat.Controllers
             }
         }
 
-        [Route("DodajIgracaUTim/{TimID}/{BrojDresa}/{PozicijaID}")]
+        [Route("DodajIgracaUTim/{NazivTima}/{BrojDresa}")]
         [HttpPut]
-        public async Task<ActionResult> DodajIgracaUTim(int TimID, int BrojDresa, int PozicijaID)
+        public async Task<ActionResult> DodajIgracaUTim(string NazivTima, int BrojDresa)
         {
-            if(Context.Timovi.Where(t => t.ID == TimID).FirstOrDefault() == null)
+            if(Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault() == null)
             {
-                return BadRequest("Nije validan ID tima!");
+                return BadRequest("Nije validan naziv tima!");
             }
             if(Context.Igraci.Where(i => i.BrojDresa == BrojDresa).FirstOrDefault() == null)
             {
@@ -179,21 +179,16 @@ namespace Projekat.Controllers
             {
                 return BadRequest("Igrac sa ovim brojem dresa vec ima tim!");
             }
-            if(Context.Pozicije.Where(p => p.ID == PozicijaID).FirstOrDefault() == null)
-            {
-                return BadRequest("Nije validna pozicija!");
-            }
 
             try
             {
                 var PovVrd = Context.Igraci
                 .Include(i => i.Pozicija)
-                .Where(i => i.Pozicija.ID == PozicijaID)
                 .Where(i => i.BrojDresa == BrojDresa)
                 .Where(i => i.Tim == null);
 
                 var PostojeciIgrac = PovVrd.FirstOrDefault();
-                var PostojeciTim = Context.Timovi.Where(t => t.ID == TimID).FirstOrDefault();
+                var PostojeciTim = Context.Timovi.Where(t => t.Naziv == NazivTima).FirstOrDefault();
                 Igrac NoviIgrac = new Igrac
                 {
                     ID = PostojeciIgrac.ID,
@@ -202,7 +197,7 @@ namespace Projekat.Controllers
                     BrojDresa = PostojeciIgrac.BrojDresa,
                     BrojGodina = PostojeciIgrac.BrojGodina,
                     Kvalitet = PostojeciIgrac.Kvalitet,
-                    Pozicija = Context.Pozicije.Where(p => p.ID == PozicijaID).FirstOrDefault(),
+                    Pozicija = PostojeciIgrac.Pozicija,
                     Nacionalnost = PostojeciIgrac.Nacionalnost,
                     Tim = PostojeciTim
                 };
@@ -231,9 +226,9 @@ namespace Projekat.Controllers
             {
                 if(Context.Menadzeri.Where(m => m.Tim.ID == ID).FirstOrDefault() != null)           
                     Context.Menadzeri.Where(m => m.Tim.ID == ID).FirstOrDefault().Tim = null;
-                if(Context.Igraci.Where(p => p.Tim.ID == ID).ToList() != null)
+                if(Context.Igraci.Where(i => i.Tim.ID == ID).ToList() != null)
                 {
-                    var Igraci = Context.Igraci.Where(p => p.Tim.ID == ID).ToList();
+                    var Igraci = Context.Igraci.Where(i => i.Tim.ID == ID).ToList();
 
                     foreach(var i in Igraci)
                     {
